@@ -3,48 +3,161 @@
 #include <ctime>
 #include <string>
 
-
-struct CoordSys {
-	int x0, y0;
-	double scaleX, scaleY;
+class CoordSys {
+	int x0_, y0_;
+	double scaleX_, scaleY_;
+public:
+	double* to_pixels(int x, int y);
+	void draw_point(int x, int y);
+	CoordSys(int x0, int y0, double scaleX, double scaleY) {
+		x0_ = x0;
+		y0_ = y0;
+		scaleX_ = scaleX;
+		scaleY_ = scaleY;
+	}
 };
 
 
-double* to_pixels(int x, int y, const CoordSys* coord);
-void draw_point(int x, int y, const CoordSys* coord);
+class CoordWindow {
+	int x0_, y0_, x1_, y1_;
+	const char* signature_;
+public:
+	void draw_window();
+	void draw_grid();
+	void draw_axis();
+	void set_color_back();
+	void write_signature();
+	CoordWindow(int x0, int y0, int x1, int y1, const char* signature) {
+		x0_ = x0;
+		y0_ = y0;
+		x1_ = x1;
+		y1_ = y1;
+		signature_ = signature;
+	}
+};
+
+
+class Button {
+	int x0_, y0_, x1_, y1_;
+	const char* name_;
+public:
+	void draw_button();
+	bool if_button_pressed();
+	Button(int x0, int y0, int x1, int y1, const char* name) {
+		x0_ = x0;
+		y0_ = y0;
+		x1_ = x1;
+		y1_ = y1;
+		name_ = name;
+	}
+};
+
+
 int bubbleSort(double* num, int size);
 int selectionSort(double* num, int size);
 double* get_random_numbers(int size, int elem_for_random);
 int count_of_comparison(int size);
 void start_window();
 void create_working_space();
-void draw_sort(int key);
+void clear_window();
+void draw_sort(int kind_of_sort);
 void run_program();
 
 
 int main() {
 	start_window();
 	run_program();
-	
 }
 
 
-double* to_pixels(int x, int y, const CoordSys* coord) {
+double* CoordSys::to_pixels(int x, int y) {
 	double* rec_coord = new double[2];
-	rec_coord[0] = x * coord->scaleX + coord->x0;
-	rec_coord[1] = coord->y0 - y * coord->scaleY;
+	rec_coord[0] = x * scaleX_ + x0_;
+	rec_coord[1] = y0_ - y * scaleY_;
 	return rec_coord;
 }
 
 
-void draw_point(int x, int y, const CoordSys* coord) {
-	double* rec_coord = to_pixels(x, y, coord);
-	if (rec_coord[1] >= 55) {
-		txCircle(rec_coord[0], rec_coord[1], 3);
+void CoordSys::draw_point(int x, int y) {
+	txSetColor(TX_LIGHTGREEN);
+	txSetFillColor(RGB(0, 191, 255));
+	int top_border_of_area = 55;
+	int point_radius = 3;
+	double* rec_coord = to_pixels(x, y);
+	if (rec_coord[1] >= top_border_of_area) {
+		txCircle(rec_coord[0], rec_coord[1], point_radius);
 	}
 	delete[] rec_coord;
 }
 
+
+void CoordWindow::draw_window() {
+	txSetColor(TX_LIGHTGREEN);
+
+	txRectangle(x0_, y0_, x1_, y1_);
+}
+
+void CoordWindow::draw_grid() {
+	for (int line = x0_; line < x1_; line += 10) {
+		txLine(line, y0_, line, y1_);
+	}
+	for (int line = y0_; line < y1_; line += 10) {
+		txLine(x0_, line, x1_, line);
+	}
+}
+
+
+void CoordWindow::draw_axis() {
+	txSetColor(TX_BLACK);
+
+	txLine(x0_ + 10, y0_, x0_ + 10, y1_);
+	txLine(x0_, y1_ - 10, x1_, y1_ - 10);
+
+	txLine(x0_ + 10, y0_, x0_ + 15, y0_ + 5);
+	txLine(x0_ + 10, y0_, x0_ + 5, y0_ + 5);
+
+	txLine(x1_ - 5, y1_ - 15, x1_, y1_ - 10);
+	txLine(x1_ - 5, y1_ - 5, x1_, y1_ - 10);
+}
+
+
+void CoordWindow::set_color_back() {
+	txSetFillColor(TX_WHITE);
+}
+
+
+void CoordWindow::write_signature() {
+	txDrawText(x0_- 30, y1_ + 15, x1_, y1_ + 30, signature_);
+}
+
+
+CoordWindow left_window(40, 50, 550, 560, "dependence the num of comp on the num of elem ");
+CoordWindow right_window(640, 50, 1150, 560, "dependence the num of exch on the num of elem ");
+
+
+void Button::draw_button() {
+	txSetFillColor(TX_BLACK);
+	txRectangle(x0_, y0_, x1_, y1_);
+	txDrawText(x0_, y0_, x1_, y1_, name_);
+}
+
+
+bool Button::if_button_pressed() {
+	if (txMouseX() >= x0_ && txMouseX() <= x1_ && txMouseY() >= y0_ && txMouseY() <= y1_ && txMouseButtons() == 1) {
+		while (txMouseButtons() == 1) {
+			txSleep(1);
+		}
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
+}
+
+
+Button bubble_sort(200, 600, 400, 650, "Bubble Sort");
+Button clear(500, 600, 700, 650, "Clear");
+Button selection_sort(800, 600, 1000, 650, "Selection Sort");
 
 int bubbleSort(double* num, int size) {
 	int count_of_exchange = 0;
@@ -98,51 +211,35 @@ int count_of_comparison(int size) {
 void start_window() {
 	txCreateWindow(1200, 700);
 	create_working_space();
-	txDrawText(475, 625, 750, 700, "click to start sorting");
 }
 
 
 void create_working_space() {
-	txSetFillColor(TX_WHITE);
-	txSetColor(TX_LIGHTGREEN);
-	txRectangle(40, 50, 550, 560);
-	txRectangle(640, 50, 1150, 560);
-	txSetFillColor(RGB(0, 191, 255));
-	txRectangle(575, 575, 625, 625);
+	left_window.set_color_back();
+	right_window.set_color_back();
 
-	for (int line = 60; line < 550; line += 10) {
-		txLine(line, 50, line, 550);
-		txLine(line + 600, 50, line + 600, 550);
-	}
+	left_window.draw_window();
+	right_window.draw_window();
 
-	for (int line = 540; line > 50; line -= 10) {
-		txLine(50, line, 550, line);
-		txLine(650, line, 1150, line);
-	}
+	bubble_sort.draw_button();
+	clear.draw_button();
+	selection_sort.draw_button();
 
-	txSetColor(TX_BLACK);
-	txLine(50, 50, 50, 560);
-	txLine(40, 550, 550, 550);
-	txLine(650, 50, 650, 560);
-	txLine(640, 550, 1150, 550);
+	left_window.draw_grid();
+	right_window.draw_grid();
 
-	txLine(50, 50, 55, 55);
-	txLine(50, 50, 45, 55);
-
-	txLine(650, 50, 655, 55);
-	txLine(650, 50, 645, 55);
-
-	txLine(545, 545, 550, 550);
-	txLine(545, 555, 550, 550);
-
-	txLine(1145, 545, 1150, 550);
-	txLine(1145, 555, 1150, 550);
-
-	txSetColor(TX_LIGHTGREEN);
+	left_window.draw_axis();
+	right_window.draw_axis();
 }
 
 
-void draw_sort(int key) {
+void clear_window() {
+	txSetFillColor(TX_BLACK);
+	txClear();
+}
+
+
+void draw_sort(int kind_of_sort) {
 	srand(time(0));
 	int elem_for_random = 1 + rand() % 1000000;
 
@@ -155,27 +252,26 @@ void draw_sort(int key) {
 
 		double* sortable_array = get_random_numbers(size_of_array, elem_for_random);
 
-		if (key == 0) {
+		if (kind_of_sort == 0) {
 			count_of_exchange = selectionSort(sortable_array, size_of_array);
-			txDrawText(500, 15, 700, 25, "Selection Sort:");
 		}
 		else {
 			count_of_exchange = bubbleSort(sortable_array, size_of_array);
 			scaleY_for_exchange = 0.001;
-			txDrawText(500, 15, 700, 25, "Bubble Sort:");
 		}
 
 		count_of_comp = count_of_comparison(size_of_array);
 
-		const CoordSys left_graph = { 50, 550, 0.35, 0.001 };
-		const CoordSys right_graph = { 650, 550, 0.25, scaleY_for_exchange };
+		CoordSys left_graph ( 50, 550, 0.35, 0.001 );
+		CoordSys right_graph ( 650, 550, 0.25, scaleY_for_exchange );
 
-		draw_point(size_of_array, count_of_comp, &left_graph);
-		draw_point(size_of_array, count_of_exchange, &right_graph);
 
-		txDrawText(10, 575, 550, 600, "dependence the num of comp on the num of elem ");
-		txDrawText(690, 575, 1100, 600, "dependence the num of exch on the num of elem ");
-		txDrawText(475, 625, 750, 700, "click to change sorting");
+		left_graph.draw_point(size_of_array, count_of_comp);
+		right_graph.draw_point(size_of_array, count_of_exchange);
+
+
+		left_window.write_signature();
+		right_window.write_signature();
 
 		delete[] sortable_array;
 	}
@@ -184,23 +280,26 @@ void draw_sort(int key) {
 
 void run_program() {
 
-	int count_of_push = 0;
+	const int two_butthon_pressed = 3;
+	while (txMouseButtons() != two_butthon_pressed) {
 
-	while (txMouseButtons() != 3) {
+		const int nosort_flag = 5;
+		int kind_of_sort = nosort_flag;
 
-		int push = txMouseButtons();
-
-		if (txMouseX() >= 575 && txMouseX() <= 625 && txMouseY() >= 575 && txMouseY() <= 625 && push == 1) {
-			while (txMouseButtons() == 1) {
-				txSleep(1);
-			}
-			txSetFillColor(TX_BLACK);
-			txClear();
-
-			create_working_space();
-			count_of_push += 1;
-			draw_sort(count_of_push % 2);
+		if (bubble_sort.if_button_pressed()) {
+			kind_of_sort = 1;
 		}
-		push = 0;
+		if (selection_sort.if_button_pressed()) {
+			kind_of_sort = 0;
+		}
+		if (clear.if_button_pressed()) {
+			clear_window();
+			create_working_space();
+		}
+		if (kind_of_sort != nosort_flag) {
+			draw_sort(kind_of_sort);
+		}
 	}
 }
+
+
