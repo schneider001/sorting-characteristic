@@ -63,14 +63,14 @@ void start_window();
 void create_working_space();
 void clear_window();
 void draw_sort(	int kind_of_sort,
-				double scaleY_for_exchange,
-				int* quantity_exchange_select,
-				int* quantity_exchange_bubble);
+		double scaleY_for_exchange,
+		int* quantity_exchange_select,
+		int* quantity_exchange_bubble);
 void redraw_exchange_graph(	double scaleY_for_exchange,
-							int* quantity_exchange_select,
-							int* quantity_exchange_bubble,
-							int* is_select_pressed_now,
-							int* is_bubble_pressed_now);
+				int* quantity_exchange_select,
+				int* quantity_exchange_bubble,
+				int* is_select_pressed_now,
+				int* is_bubble_pressed_now);
 
 
 void run_program();
@@ -264,9 +264,9 @@ void clear_window() {
 
 
 void draw_sort(	int kind_of_sort,
-				double scaleY_for_exchange,
-				int* quantity_exchange_select,
-				int* quantity_exchange_bubble) {
+		double scaleY_for_exchange,
+		int* quantity_exchange_select,
+		int* quantity_exchange_bubble) {
 	srand(time(0));
 	int elem_for_random = 1 + rand() % 1000000;
 
@@ -295,14 +295,13 @@ void draw_sort(	int kind_of_sort,
 
 
 		left_graph.draw_point(	size_of_array,
-								count_of_comp,
-								left_window.return_top_border() + 10,
-								left_window.return_right_border() - 10);
+					count_of_comp,
+					left_window.return_top_border() + 10,
+					left_window.return_right_border() - 10);
 		right_graph.draw_point(	size_of_array,
-								count_of_exchange,
-								right_window.return_top_border() + 10,
-								right_window.return_right_border() - 10);
-
+					count_of_exchange,
+					right_window.return_top_border() + 10,
+					right_window.return_right_border() - 10);
 
 		left_window.write_signature();
 		right_window.write_signature();
@@ -312,10 +311,10 @@ void draw_sort(	int kind_of_sort,
 }
 
 void redraw_exchange_graph(	double scaleY_for_exchange,
-							int* quantity_exchange_select, 
-							int* quantity_exchange_bubble,
-							int* is_select_pressed_now,
-							int* is_bubble_pressed_now) {
+				int* quantity_exchange_select, 
+				int* quantity_exchange_bubble,
+				int* is_select_pressed_now,
+				int* is_bubble_pressed_now) {
 
 	CoordSys right_graph(650, 550, 0.25, scaleY_for_exchange);
 
@@ -328,15 +327,15 @@ void redraw_exchange_graph(	double scaleY_for_exchange,
 
 		if (*is_select_pressed_now == 1) {
 			right_graph.draw_point(	size_of_array,
-									quantity_exchange_select[size_of_array / 10 - 1],
-									right_window.return_top_border() + 10, 
-									right_window.return_right_border() - 10);
+						quantity_exchange_select[size_of_array / 10 - 1],
+						right_window.return_top_border() + 10, 
+						right_window.return_right_border() - 10);
 		}
 		if (*is_bubble_pressed_now == 1) {
 			right_graph.draw_point(	size_of_array,
-									quantity_exchange_bubble[size_of_array / 10 - 1],
-									right_window.return_top_border() + 10,
-									right_window.return_right_border() - 10);
+						quantity_exchange_bubble[size_of_array / 10 - 1],
+						right_window.return_top_border() + 10,
+						right_window.return_right_border() - 10);
 		}
 	}
 }
@@ -379,18 +378,18 @@ void run_program() {
 		if (add_scaleY_exhnange.if_button_pressed()) {
 			scaleY_for_exchange *= 1.5;
 			redraw_exchange_graph(	scaleY_for_exchange,
-									quantity_exchange_select,
-									quantity_exchange_bubble,
-									&is_select_pressed_now,
-									&is_bubble_pressed_now);
+						quantity_exchange_select,
+						quantity_exchange_bubble,
+						&is_select_pressed_now,
+						&is_bubble_pressed_now);
 		}
 		if (reduce_scaleY_exhnange.if_button_pressed()) {
 			scaleY_for_exchange /= 1.5;
 			redraw_exchange_graph(	scaleY_for_exchange, 
-									quantity_exchange_select, 
-									quantity_exchange_bubble,
-									&is_select_pressed_now,
-									&is_bubble_pressed_now);
+						quantity_exchange_select, 
+						quantity_exchange_bubble,
+						&is_select_pressed_now,
+						&is_bubble_pressed_now);
 		}
 	}
 }
