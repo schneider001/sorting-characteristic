@@ -8,7 +8,7 @@ class CoordSys {
 	double scaleX_, scaleY_;
 public:
 	double* to_pixels(int x, int y);
-	void draw_point(int x, int y);
+	void draw_point(int x, int y, int top_border_of_area, int right_border_of_area);
 	CoordSys(int x0, int y0, double scaleX, double scaleY) {
 		x0_ = x0;
 		y0_ = y0;
@@ -27,6 +27,8 @@ public:
 	void draw_axis();
 	void set_color_back();
 	void write_signature();
+	int return_top_border();
+	int return_right_border();
 	CoordWindow(int x0, int y0, int x1, int y1, const char* signature) {
 		x0_ = x0;
 		y0_ = y0;
@@ -60,7 +62,17 @@ int count_of_comparison(int size);
 void start_window();
 void create_working_space();
 void clear_window();
-void draw_sort(int kind_of_sort);
+void draw_sort(	int kind_of_sort,
+				double scaleY_for_exchange,
+				int* quantity_exchange_select,
+				int* quantity_exchange_bubble);
+void redraw_exchange_graph(	double scaleY_for_exchange,
+							int* quantity_exchange_select,
+							int* quantity_exchange_bubble,
+							int* is_select_pressed_now,
+							int* is_bubble_pressed_now);
+
+
 void run_program();
 
 
@@ -78,13 +90,12 @@ double* CoordSys::to_pixels(int x, int y) {
 }
 
 
-void CoordSys::draw_point(int x, int y) {
+void CoordSys::draw_point(int x, int y, int top_border_of_area, int right_border_of_area) {
 	txSetColor(TX_LIGHTGREEN);
 	txSetFillColor(RGB(0, 191, 255));
-	int top_border_of_area = 55;
 	int point_radius = 3;
 	double* rec_coord = to_pixels(x, y);
-	if (rec_coord[1] >= top_border_of_area) {
+	if (rec_coord[1] >= top_border_of_area && rec_coord[0] <= right_border_of_area) {
 		txCircle(rec_coord[0], rec_coord[1], point_radius);
 	}
 	delete[] rec_coord;
@@ -131,6 +142,15 @@ void CoordWindow::write_signature() {
 }
 
 
+int CoordWindow::return_top_border() {
+	return y0_;
+}
+
+
+int CoordWindow::return_right_border() {
+	return x1_;
+}
+
 CoordWindow left_window(40, 50, 550, 560, "dependence the num of comp on the num of elem ");
 CoordWindow right_window(640, 50, 1150, 560, "dependence the num of exch on the num of elem ");
 
@@ -158,6 +178,8 @@ bool Button::if_button_pressed() {
 Button bubble_sort(200, 600, 400, 650, "Bubble Sort");
 Button clear(500, 600, 700, 650, "Clear");
 Button selection_sort(800, 600, 1000, 650, "Selection Sort");
+Button reduce_scaleY_exhnange(1050, 600, 1075, 625, "-");
+Button add_scaleY_exhnange(1075, 600, 1100, 625, "+");
 
 int bubbleSort(double* num, int size) {
 	int count_of_exchange = 0;
@@ -224,6 +246,8 @@ void create_working_space() {
 	bubble_sort.draw_button();
 	clear.draw_button();
 	selection_sort.draw_button();
+	reduce_scaleY_exhnange.draw_button();
+	add_scaleY_exhnange.draw_button();
 
 	left_window.draw_grid();
 	right_window.draw_grid();
@@ -239,35 +263,45 @@ void clear_window() {
 }
 
 
-void draw_sort(int kind_of_sort) {
+void draw_sort(	int kind_of_sort,
+				double scaleY_for_exchange,
+				int* quantity_exchange_select,
+				int* quantity_exchange_bubble) {
 	srand(time(0));
 	int elem_for_random = 1 + rand() % 1000000;
 
 	int count_of_exchange = 0;
 	int count_of_comp = 0;
-	double scaleY_for_exchange = 0.25;
 
 	for (int size_of_array = 10; size_of_array <= 2000; size_of_array += 10) {
+
 		elem_for_random += size_of_array;
 
 		double* sortable_array = get_random_numbers(size_of_array, elem_for_random);
 
 		if (kind_of_sort == 0) {
 			count_of_exchange = selectionSort(sortable_array, size_of_array);
+			quantity_exchange_select[size_of_array / 10 - 1] = count_of_exchange;
 		}
 		else {
 			count_of_exchange = bubbleSort(sortable_array, size_of_array);
-			scaleY_for_exchange = 0.001;
+			quantity_exchange_bubble[size_of_array / 10 - 1] = count_of_exchange;
 		}
 
 		count_of_comp = count_of_comparison(size_of_array);
 
 		CoordSys left_graph ( 50, 550, 0.35, 0.001 );
-		CoordSys right_graph ( 650, 550, 0.25, scaleY_for_exchange );
+		CoordSys right_graph ( 650, 550, 0.25, scaleY_for_exchange);
 
 
-		left_graph.draw_point(size_of_array, count_of_comp);
-		right_graph.draw_point(size_of_array, count_of_exchange);
+		left_graph.draw_point(	size_of_array,
+								count_of_comp,
+								left_window.return_top_border() + 10,
+								left_window.return_right_border() - 10);
+		right_graph.draw_point(	size_of_array,
+								count_of_exchange,
+								right_window.return_top_border() + 10,
+								right_window.return_right_border() - 10);
 
 
 		left_window.write_signature();
@@ -277,10 +311,49 @@ void draw_sort(int kind_of_sort) {
 	}
 }
 
+void redraw_exchange_graph(	double scaleY_for_exchange,
+							int* quantity_exchange_select, 
+							int* quantity_exchange_bubble,
+							int* is_select_pressed_now,
+							int* is_bubble_pressed_now) {
+
+	CoordSys right_graph(650, 550, 0.25, scaleY_for_exchange);
+
+	right_window.set_color_back();
+	right_window.draw_window();
+	right_window.draw_grid();
+	right_window.draw_axis();
+
+	for (int size_of_array = 10; size_of_array <= 2000; size_of_array += 10) {
+
+		if (*is_select_pressed_now == 1) {
+			right_graph.draw_point(	size_of_array,
+									quantity_exchange_select[size_of_array / 10 - 1],
+									right_window.return_top_border() + 10, 
+									right_window.return_right_border() - 10);
+		}
+		if (*is_bubble_pressed_now == 1) {
+			right_graph.draw_point(	size_of_array,
+									quantity_exchange_bubble[size_of_array / 10 - 1],
+									right_window.return_top_border() + 10,
+									right_window.return_right_border() - 10);
+		}
+	}
+}
+
 
 void run_program() {
 
+	int is_select_pressed_now = 0;
+	int is_bubble_pressed_now = 0;
+
+	double scaleY_for_exchange = 0.01;
+
 	const int two_butthon_pressed = 3;
+
+	int quantity_exchange_select[200] = { 0 };
+	int quantity_exchange_bubble[200] = { 0 };
+
 	while (txMouseButtons() != two_butthon_pressed) {
 
 		const int nosort_flag = 5;
@@ -288,16 +361,36 @@ void run_program() {
 
 		if (bubble_sort.if_button_pressed()) {
 			kind_of_sort = 1;
+			is_bubble_pressed_now = 1;
 		}
 		if (selection_sort.if_button_pressed()) {
 			kind_of_sort = 0;
+			is_select_pressed_now = 1;
 		}
 		if (clear.if_button_pressed()) {
 			clear_window();
 			create_working_space();
+			is_select_pressed_now = 0;
+			is_bubble_pressed_now = 0;
 		}
 		if (kind_of_sort != nosort_flag) {
-			draw_sort(kind_of_sort);
+			draw_sort(kind_of_sort, scaleY_for_exchange, quantity_exchange_select, quantity_exchange_bubble);
+		}
+		if (add_scaleY_exhnange.if_button_pressed()) {
+			scaleY_for_exchange *= 1.5;
+			redraw_exchange_graph(	scaleY_for_exchange,
+									quantity_exchange_select,
+									quantity_exchange_bubble,
+									&is_select_pressed_now,
+									&is_bubble_pressed_now);
+		}
+		if (reduce_scaleY_exhnange.if_button_pressed()) {
+			scaleY_for_exchange /= 1.5;
+			redraw_exchange_graph(	scaleY_for_exchange, 
+									quantity_exchange_select, 
+									quantity_exchange_bubble,
+									&is_select_pressed_now,
+									&is_bubble_pressed_now);
 		}
 	}
 }
